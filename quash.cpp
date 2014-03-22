@@ -20,7 +20,7 @@ bool fileExists( string theFile );
 string getPath( string );
 bool stdIn(string theFile);
 bool stdOut(string theFile);
-void executeJob( string, char **, char ** );
+void executeJob( vector<string> jerbs, char ** );
 
 struct job
 { /* Variables to hold job info. */
@@ -57,35 +57,44 @@ int main( int argc, char **argv, char **envp )
        }
        else
        {
-        	executeJob( command[ 0 ], argv, envp );
+        	executeJob( command, envp );
        }
    }
   
 }
 
-void executeJob( string jerb,char ** argv, char ** envp )
+void executeJob( vector<string> jerbs, char ** envp )
 {
 	bool exists;
-	string test;
+	char ** argv = new char*[ jerbs.size() + 1 ];
 	
 
-	if( jerb[0] == '/' )
+	for(  int i = 0; i < jerbs.size(); i++) 
 	{
-		exists = fileExists( jerb );
+		argv[ i ] = new char[jerbs[i].length() + 1];
+		strcpy(argv[ i], jerbs[i].c_str());
 	}
-	if( !strncmp( "./", jerb.c_str(), 2 ) )
-	{
-		jerb.erase( 0, 2 );
 
-		exists = fileExists( jerb );
+	argv[ jerbs.size() ] = NULL;  
+
+
+	if( jerbs[0][0] == '/' )
+	{
+		exists = fileExists( jerbs[0] );
+	}
+	if( !strncmp( "./", jerbs[0].c_str(), 2 ) )
+	{
+		jerbs[0].erase( 0, 2 );
+
+		exists = fileExists( jerbs[0] );
 	}
 	else
 	{
-		jerb = getPath( jerb );
+		jerbs[0] = getPath( jerbs[0] );
 		
-		if( jerb != "" )
+		if( jerbs[0] != "" )
 		{
-			cout << jerb << endl;
+			cout << jerbs[0] << endl;
 			exists = true;
 		}
 		else
@@ -104,7 +113,7 @@ void executeJob( string jerb,char ** argv, char ** envp )
 		}
 		else if( pid == 0 )
 		{
-			if( execve( jerb.c_str(), argv, envp ) < 0 )
+			if( execve( jerbs[0].c_str(), argv, envp ) < 0 )
 			{
 				cout << "YOU SUCK" << endl;
 			}
