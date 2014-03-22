@@ -14,10 +14,8 @@ void set( vector<string> command );
 vector<string> buildCommand( string arg );
 bool fileExists( string theFile );
 string getPath( string );
-bool stdIn(string theFile)
-bool stdOut(string theFile)
-
-vector<Job> theJobs;
+bool stdIn(string theFile);
+bool stdOut(string theFile);
 
 struct job
 { /* Variables to hold job info. */
@@ -25,7 +23,9 @@ struct job
 	int id;
 	pid_t pid;
 	bool isBackground;
-}
+};
+
+vector<job> theJobs;
 
 int main( int argc, char **argv, char **envp )
 {
@@ -145,17 +145,17 @@ void set( vector<string> command )
 void jobs()
 { /* Print all jobs. */
 	if(theJobs.empty())
-	{
+	{ /* There are no jobs, tell the user. */
 		cout << "There are no jobs running.\n";
 	}
 	
 	else
-	{
+	{ /* Clarification for what prints below. */
 		cout << "Background? / ID / PID / Doing?\n";
 	}
 
 	for(int i = 0; i < theJobs.size(); i ++)
-	{
+	{ /* Print out each job, specifying what is in the background and what isn't. */
 		if(theJobs[i].isBackground == true)
 		{
 			cout << "T " << theJobs[i].id << " " << theJobs[i].pid << " " << theJobs[i].theJob << "\n";
@@ -197,14 +197,14 @@ bool stdOut(string theFile)
 		return false;
 	}
 
-	if(inFile == NULL)
+	if(outFile == NULL)
 	{ /* Check if readable. */
 		cout << "File " << theFile << " does not exist.\n Please check permissions or enter another file.\n";
 		return false;
 	}
 
-	dup2(fileno(inFile), STDOUT_FILENO);
-	fclose(inFile);
+	dup2(fileno(outFile), STDOUT_FILENO);
+	fclose(outFile);
 	return 0;
 }
 
