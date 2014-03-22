@@ -11,7 +11,7 @@
 
 using namespace std;
 
-void kill(string arg);
+void kill(vector<string> arg);
 void jobs();
 void changeDir( vector<string> test );
 void set( vector<string> command );
@@ -54,6 +54,14 @@ int main( int argc, char **argv, char **envp )
        else if( command[ 0 ] == "set" )
        {
             set( command );
+       }
+       else if( command[ 0 ] == "jobs" )
+       {
+	    jobs();
+       }
+       else if( command[ 0 ] == "kill" )
+       {
+            kill ( command );
        }
        else
        {
@@ -240,9 +248,9 @@ void jobs()
 	}
 }
  
-void kill(string arg)
+void kill(vector<string> arg)
 { /* Kill specified process. */
-	istringstream is(arg);
+	istringstream is(arg[1]);
 	int theInt;
 	is >> theInt;
 	if(kill(theInt, SIGINT) != 0)
@@ -252,7 +260,7 @@ void kill(string arg)
 
 	else
 	{
-		cout << "Process " << arg << " was killed.\n";
+		cout << "Process " << arg[1] << " was killed.\n";
 	}
 }
 
