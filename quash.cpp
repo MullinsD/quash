@@ -5,6 +5,7 @@
 #include <vector>
 #include <cstring>
 #include <errno.h>
+#include <sys/wait.h>
 
 using namespace std;
 
@@ -13,8 +14,9 @@ void set( vector<string> command );
 vector<string> buildCommand( string arg );
 bool fileExists( string theFile );
 string getPath( string );
-bool stdIn(string theFile)
-bool stdOut(string theFile)
+bool stdIn(string theFile);
+bool stdOut(string theFile);
+void executeJob( string, char **, char ** );
 
 int main( int argc, char **argv, char **envp )
 {
@@ -40,11 +42,68 @@ int main( int argc, char **argv, char **envp )
        }
        else
        {
-        	cout << getPath( command[ 0 ] ) << endl;
+        	executeJob( command[ 0 ], argv, envp );
        }
    }
   
 }
+
+void executeJob( string jerb,char ** argv, char ** envp )
+{
+	bool exists;
+	string test;
+	
+
+	if( jerb[0] == '/' )
+	{
+		exists = fileExists( jerb );
+	}
+	if( !strncmp( "./", jerb.c_str(), 2 ) )
+	{
+		jerb.erase( 0, 2 );
+
+		exists = fileExists( jerb );
+	}
+	else
+	{
+		jerb = getPath( jerb );
+		
+		if( jerb != "" )
+		{
+			cout << jerb << endl;
+			exists = true;
+		}
+		else
+		{
+			exists = false;
+		}
+	}
+
+	if( exists )
+	{
+		pid_t pid = fork();
+		
+		if( pid	< 0 )
+		{
+			cout << "YOU SUCK AT FORKING" << endl;
+		}
+		else if( pid == 0 )
+		{
+			if( execve( jerb.c_str(), argv, envp ) < 0 )
+			{
+				cout << "YOU SUCK" << endl;
+			}
+		}
+	}
+	else
+	{
+	cout << "FILE NOT FOUND" << endl;
+	}
+
+	wait( NULL );
+}
+
+	
 string getPath( string Executable )
 {
 	stringstream ss( getenv( "PATH" ) );
@@ -56,14 +115,14 @@ string getPath( string Executable )
 		paths.push_back( tokens );
 	}
 
-	for(int i = 0; i < paths.size(); i++)
+		for(int i = 0; i < paths.size(); i++)
 	{
 
 		paths[ i ] += '/' + Executable;
+		
 
 		if( fileExists( paths[ i ] ) )
 		{
-			cout << paths[ i ] << endl;
 			return paths[ i ];
 		}
 	}
@@ -160,14 +219,14 @@ bool stdOut(string theFile)
 		return false;
 	}
 
-	if(inFile == NULL)
+	if(outFile == NULL)
 	{ /* Check if readable. */
 		cout << "File " << theFile << " does not exist.\n Please check permissions or enter another file.\n";
 		return false;
 	}
 
-	dup2(fileno(inFile), STDOUT_FILENO);
-	fclose(inFile);
+	dup2(fileno(outFile), STDOUT_FILENO);
+	fclose(outFile);
 	return 0;
 }
 
