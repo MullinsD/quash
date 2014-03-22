@@ -19,7 +19,7 @@ bool stdOut(string theFile);
 
 struct job
 { /* Variables to hold job info. */
-	std::string theJob;
+	string theJob;
 	int id;
 	pid_t pid;
 	bool isBackground;
