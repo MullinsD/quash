@@ -37,6 +37,29 @@ int main( int argc, char **argv, char **envp )
    }
   
 }
+string getPath( string Executable )
+{
+	stringstream ss( Executable );
+	string tokens;
+	vector<string> paths;
+
+	while( getline( ss, tokens, ':' ) )
+	{
+		paths.push_back( tokens );
+	}
+
+	for(int i = 0; i < paths.size(); i++)
+	{
+		paths[ i ] += '/' + Executable;
+
+		if( fileExists( paths[ i ] )
+		{
+			return paths[ i ];
+		}
+	}
+
+	return NULL;
+}
 
 void changeDir( vector<string> test )
 {
@@ -44,13 +67,17 @@ void changeDir( vector<string> test )
     {
         if( chdir( getenv( "HOME" ) ) < 0 )
         {
-            cout << "YOU SUCK" << endl;
-        }
-        else
-        {
-            system( "ls" ); 
+            cout << "ERROR RETURNING TO HOME DIRECTORY" << endl;
         }
     }
+
+    else if( test.size() == 2 )
+    {
+	if( chdir( test[1].c_str() ) < 0 )
+	{
+	    cout << "DIR DOES NOT EXIST" << endl;
+	}
+   }
 }
 
 void set( vector<string> command )
