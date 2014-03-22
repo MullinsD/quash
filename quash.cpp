@@ -13,6 +13,8 @@ void set( vector<string> command );
 vector<string> buildCommand( string arg );
 bool fileExists( string theFile );
 string getPath( string );
+bool stdIn(string theFile)
+bool stdOut(string theFile)
 
 int main( int argc, char **argv, char **envp )
 {
