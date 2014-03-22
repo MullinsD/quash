@@ -130,7 +130,6 @@ void set( vector<string> command )
 	}
 }
 
-<<<<<<< HEAD
 bool stdIn(string theFile)
 { /* Copies the file pointer to STDIN_FILENO or notifies user of mistakes. */
 	FILE* inFile = fopen(theFile.c_str(), "r");
@@ -171,10 +170,7 @@ bool stdOut(string theFile)
 	return 0;
 }
 
-int fileExists(string theFile)
-=======
 bool fileExists(string theFile)
->>>>>>> f0fe699240fef24ba0b68496f5c32359da814d6d
 { /* Checks to see if a file exists using the access system call, returns 0 if it does,
      returns -1 if it does not, and prints an error message. */
 	if(access(theFile.c_str(), F_OK) != 0)
