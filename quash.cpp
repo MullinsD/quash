@@ -11,6 +11,8 @@ using namespace std;
 void changeDir( vector<string> test );
 void set( vector<string> command );
 vector<string> buildCommand( string arg );
+bool fileExists( string theFile );
+string getPath( string );
 
 int main( int argc, char **argv, char **envp )
 {
@@ -26,16 +28,46 @@ int main( int argc, char **argv, char **envp )
        {
             exit( 0 );
        }
-       if( command[ 0 ] == "cd" )
+       else if( command[ 0 ] == "cd" )
        {
+	    cout << "Changing Directory" << endl;
 	    changeDir( command );
        }
-       if( command[ 0 ] == "set" )
+       else if( command[ 0 ] == "set" )
        {
             set( command );
        }
+       else
+       {
+        	cout << getPath( command[ 0 ] ) << endl;
+       }
    }
   
+}
+string getPath( string Executable )
+{
+	stringstream ss( getenv( "PATH" ) );
+	string tokens;
+	vector<string> paths;
+
+	while( getline( ss, tokens, ':' ) )
+	{
+		paths.push_back( tokens );
+	}
+
+	for(int i = 0; i < paths.size(); i++)
+	{
+
+		paths[ i ] += '/' + Executable;
+
+		if( fileExists( paths[ i ] ) )
+		{
+			cout << paths[ i ] << endl;
+			return paths[ i ];
+		}
+	}
+
+	return "";
 }
 
 void changeDir( vector<string> test )
@@ -44,13 +76,17 @@ void changeDir( vector<string> test )
     {
         if( chdir( getenv( "HOME" ) ) < 0 )
         {
-            cout << "YOU SUCK" << endl;
-        }
-        else
-        {
-            system( "ls" ); 
+            cout << "ERROR RETURNING TO HOME DIRECTORY" << endl;
         }
     }
+
+    else if( test.size() == 2 )
+    {
+	if( chdir( test[1].c_str() ) < 0 )
+	{
+	    cout << "DIR DOES NOT EXIST" << endl;
+	}
+   }
 }
 
 void set( vector<string> command )
@@ -94,6 +130,7 @@ void set( vector<string> command )
 	}
 }
 
+<<<<<<< HEAD
 bool stdIn(string theFile)
 { /* Copies the file pointer to STDIN_FILENO or notifies user of mistakes. */
 	FILE* inFile = fopen(theFile.c_str(), "r");
@@ -135,15 +172,17 @@ bool stdOut(string theFile)
 }
 
 int fileExists(string theFile)
+=======
+bool fileExists(string theFile)
+>>>>>>> f0fe699240fef24ba0b68496f5c32359da814d6d
 { /* Checks to see if a file exists using the access system call, returns 0 if it does,
      returns -1 if it does not, and prints an error message. */
 	if(access(theFile.c_str(), F_OK) != 0)
 	{
-		cout << "File " << theFile << " does not exist.\n Please enter a valid filename.\n";
-		return -1;
+		return false;
 	}
 
-	return 0;
+	return true;
 }
 
 vector<string> buildCommand( string arg )
