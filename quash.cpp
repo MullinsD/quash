@@ -24,13 +24,12 @@ int main( int argc, char **argv, char **envp )
    {
        command = buildCommand( commandLine );
 
-       if( command[ 0 ] == "quit" )
+       if( command[ 0 ] == "quit" || command[ 0 ] == "exit" )
        {
             exit( 0 );
        }
        else if( command[ 0 ] == "cd" )
        {
-	    cout << "Changing Directory" << endl;
 	    changeDir( command );
        }
        else if( command[ 0 ] == "set" )
