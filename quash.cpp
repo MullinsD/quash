@@ -94,6 +94,18 @@ void set( vector<string> command )
 	}
 }
 
+int fileExists(std::string theFile)
+{ /* Checks to see if a file exists using the access system call, returns 0 if it does,
+     returns -1 if it does not, and prints an error message. */
+	if(access(theFile.c_str(), F_OK) != 0)
+	{
+		cout << "File " << theFile << " does not exist.\n Please enter a valid filename.\n";
+		return -1;
+	}
+
+	return 0;
+}
+
 vector<string> buildCommand( string arg )
 {
     string iterator;
