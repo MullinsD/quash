@@ -8,6 +8,7 @@
 
 using namespace std;
 
+void jobs();
 void changeDir( vector<string> test );
 void set( vector<string> command );
 vector<string> buildCommand( string arg );
@@ -15,6 +16,16 @@ bool fileExists( string theFile );
 string getPath( string );
 bool stdIn(string theFile)
 bool stdOut(string theFile)
+
+vector<Job> theJobs;
+
+struct job
+{ /* Variables to hold job info. */
+	std::string theJob;
+	int id;
+	pid_t pid;
+	bool isBackground;
+}
 
 int main( int argc, char **argv, char **envp )
 {
@@ -131,6 +142,32 @@ void set( vector<string> command )
 	}
 }
 
+void jobs()
+{ /* Print all jobs. */
+	if(theJobs.empty())
+	{
+		cout << "There are no jobs running.\n";
+	}
+	
+	else
+	{
+		cout << "Background? / ID / PID / Doing?\n";
+	}
+
+	for(int i = 0; i < theJobs.size(); i ++)
+	{
+		if(theJobs[i].isBackground == true)
+		{
+			cout << "T " << theJobs[i].id << " " << theJobs[i].pid << " " << theJobs[i].theJob << "\n";
+		}
+
+		if(theJobs[i].isBackground == false)
+		{
+			cout << "F " << theJobs[i].id << " " << theJobs[i].pid << " " << theJobs[i].theJob << "\n";
+		}
+	}
+}
+ 
 bool stdIn(string theFile)
 { /* Copies the file pointer to STDIN_FILENO or notifies user of mistakes. */
 	FILE* inFile = fopen(theFile.c_str(), "r");
