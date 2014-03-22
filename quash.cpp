@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include <sstream>
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
@@ -10,6 +11,7 @@
 
 using namespace std;
 
+void kill(string arg);
 void jobs();
 void changeDir( vector<string> test );
 void set( vector<string> command );
@@ -19,7 +21,6 @@ string getPath( string );
 bool stdIn(string theFile);
 bool stdOut(string theFile);
 void executeJob( vector<string> jerbs, char ** );
-
 
 struct job
 { /* Variables to hold job info. */
@@ -239,6 +240,22 @@ void jobs()
 	}
 }
  
+void kill(string arg)
+{ /* Kill specified process. */
+	istringstream is(arg);
+	int theInt;
+	is >> theInt;
+	if(kill(theInt, SIGINT) != 0)
+	{
+		cout << "Process was immortal, could not kill.\n";
+	}
+
+	else
+	{
+		cout << "Process " << arg << " was killed.\n";
+	}
+}
+
 bool stdIn(string theFile)
 { /* Copies the file pointer to STDIN_FILENO or notifies user of mistakes. */
 	FILE* inFile = fopen(theFile.c_str(), "r");
