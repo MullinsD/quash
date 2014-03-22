@@ -81,7 +81,7 @@ void executeJob( vector<string> jerbs, char ** envp )
 	{
 		exists = fileExists( jerbs[0] );
 	}
-	if( !strncmp( "./", jerbs[0].c_str(), 2 ) )
+	else if( !strncmp( "./", jerbs[0].c_str(), 2 ) )
 	{
 		jerbs[0].erase( 0, 2 );
 
