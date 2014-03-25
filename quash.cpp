@@ -27,7 +27,6 @@ struct job
 	string theJob;
 	int id;
 	pid_t pid;
-	bool isBackground;
 };
 
 vector<job> theJobs;
@@ -231,20 +230,12 @@ void jobs()
 	
 	else
 	{ /* Clarification for what prints below. */
-		cout << "Background? / ID / PID / Doing?\n";
+		cout << "ID / PID / Doing?\n";
 	}
 
 	for(int i = 0; i < theJobs.size(); i ++)
 	{ /* Print out each job, specifying what is in the background and what isn't. */
-		if(theJobs[i].isBackground == true)
-		{
-			cout << "T " << theJobs[i].id << " " << theJobs[i].pid << " " << theJobs[i].theJob << "\n";
-		}
-
-		if(theJobs[i].isBackground == false)
-		{
-			cout << "F " << theJobs[i].id << " " << theJobs[i].pid << " " << theJobs[i].theJob << "\n";
-		}
+	cout << theJobs[i].id << " " << theJobs[i].pid << " " << theJobs[i].theJob << "\n";
 	}
 }
  
