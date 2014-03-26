@@ -39,7 +39,7 @@ vector<job *> theJobs;
 
 
 int main( int argc, char **argv, char **envp )
-{
+{ /* Quash, its Quite an Awesome SHell, isn't it? */
 	struct sigaction sig;
 	
 	memset( &sig, 0, sizeof( sig ) );
@@ -55,31 +55,31 @@ int main( int argc, char **argv, char **envp )
    string commandLine;
 
    while( getline( cin, commandLine ) )
-   {
+   { /* Read prompt. */
        jerb = buildJob( commandLine );
 
        if( jerb->theJob[ 0 ] == "quit" || jerb->theJob[ 0 ] == "exit" )
-       {
+       { /* Exit Quash. */
             exit( 0 );
        }
        else if( jerb->theJob[ 0 ] == "cd" )
-       {
+       { /* Change Directory. */
 	    changeDir( jerb->theJob );
        }
        else if( jerb->theJob[ 0 ] == "set" )
-       {
+       { /* Set PATH or HOME. */
             set( jerb->theJob );
        }
        else if( jerb->theJob[ 0 ] == "jobs" )
-       {
+       { /* List jobs. */
 	     jobs();
        }
        else if( jerb->theJob[ 0 ] == "kill" )
-       {
+       { /* Kill job. */
             kill ( jerb->theJob );
        }
        else
-       {
+       { /* Execute job. */
         	executeJob( jerb, envp );
        }
    }
@@ -117,23 +117,23 @@ void executeJob( job * jerb, char ** envp )
 	argv[ jerb->theJob.size() ] = NULL;  
 
 	if( jerb->theJob[0][0] == '/' )
-	{
+	{ /* Path is absolute. */
 		exists = fileExists( jerb->theJob[0] );
 	}
 	else if( !strncmp( "./", jerb->theJob[0].c_str(), 2 ) )
-	{
+	{ /* Path is relative. */
 		jerb->theJob[0].erase( 0, 2 );
 		exists = fileExists( jerb->theJob[0] );
 	}
 	else
-
-	{
+	{ /* Path is part of PATH. */
 		jerb->theJob[0] = getPath( jerb->theJob[0] );
 		
 		if( jerb->theJob[0] != "" )
-		{
+		{ /* Job is not empty. */
 			exists = true;
 		}
+
 		else
 		{
 			exists = false;
@@ -141,46 +141,48 @@ void executeJob( job * jerb, char ** envp )
 	}
 
 	if( exists )
-	{
+	{ /* If the file exists. */
 		pid_t pid = fork();
 		
 		if( pid	< 0 )
-		{
+		{ /* Child forked badly. */
 			cout << "Problem forking child" << endl;
 		}
 		else if( pid == 0 )
-		{
-
+		{ /* Child forked. */
 			if( jerb->isBackground )
-			{
+			{ /* Check for background flag. */
 				setpgid( 0, 0 );
 			}
 
 			if( execve( jerb->theJob[0].c_str(), argv, envp ) < 0 )
-			{	
+			{ /* Notify if execution fails. */
 				cout << "Error in execution of job" << endl;
 			}
 		}
 		else
 		{
-		if( jerb->isBackground == true )
-		{
-			jerb->id = jobId++;
-			jerb->pid = pid;
-			cout << "[ " << jerb->id << " ] " << jerb->pid << " running in the background." << endl;
-			theJobs.push_back( jerb );
+			if( jerb->isBackground == true )
+			{/* Check for background flag. */
+				jerb->id = jobId++;
+				jerb->pid = pid;
+				cout << "[ " << jerb->id << " ] " << jerb->pid << " running in the background." << endl;
+				theJobs.push_back( jerb );
+			}
+			else
+			{ /* Not background, wait for it to finish. */
+				wait( NULL );
+			}
 		}
-		else
-		{
-			wait( NULL );
-		}
-	/* Reset descriptors. */
-		}
+
 	}
+
 	else
 	{ /* File doesn't exist. */
 		cout << "FILE NOT FOUND" << endl;
 	}
+
+	/* Reset descriptors. */
 	dup2(theStdIn, STDIN_FILENO);
 	dup2(theStdOut, STDOUT_FILENO);
 }
@@ -203,7 +205,7 @@ string getPath( string Executable )
 		
 
 		if( fileExists( paths[ i ] ) )
-		{
+		{ 
 			return paths[ i ];
 		}
 	}
