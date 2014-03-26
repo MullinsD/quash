@@ -175,7 +175,7 @@ void changeDir( vector<string> command )
 
     else if( command.size() == 2 )
     { /* Switch to targeted directory, tell user if its not real. */
-	if( chdir( test[1].c_str() ) < 0 )
+	if( chdir( command[1].c_str() ) < 0 )
 	{
 	    cout << "DIR DOES NOT EXIST" << endl;
 	}
