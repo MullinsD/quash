@@ -11,23 +11,26 @@
 
 using namespace std;
 
+struct job
+{ /* Variables to hold job info. */
+	bool isBackground;
+	vector<string> theJob;
+	string fileIn;
+	string fileOut;
+	int id;
+	pid_t pid;
+};
+
 void kill(vector<string> arg);
 void jobs();
 void changeDir( vector<string> test );
 void set( vector<string> command );
-vector<string> buildCommand( string arg );
+job * buildJob( string arg );
 bool fileExists( string theFile );
 string getPath( string );
 bool stdIn(string theFile);
 bool stdOut(string theFile);
-void executeJob( vector<string> jerbs, char ** );
-
-struct job
-{ /* Variables to hold job info. */
-	string theJob;
-	int id;
-	pid_t pid;
-};
+void executeJob( job * jerb, char ** );
 
 vector<job> theJobs;
 
@@ -35,73 +38,73 @@ vector<job> theJobs;
 int main( int argc, char **argv, char **envp )
 {
    char ** test;
-   vector<string> command;
+   job * jerb = new job;
    string commandLine;
 
    while( getline( cin, commandLine ) )
    {
-       command = buildCommand( commandLine );
+       jerb = buildJob( commandLine );
 
-       if( command[ 0 ] == "quit" || command[ 0 ] == "exit" )
+       if( jerb->theJob[ 0 ] == "quit" || jerb->theJob[ 0 ] == "exit" )
        {
             exit( 0 );
        }
-       else if( command[ 0 ] == "cd" )
+       else if( jerb->theJob[ 0 ] == "cd" )
        {
-	    changeDir( command );
+	    changeDir( jerb->theJob );
        }
-       else if( command[ 0 ] == "set" )
+       else if( jerb->theJob[ 0 ] == "set" )
        {
-            set( command );
+            set( jerb->theJob );
        }
-       else if( command[ 0 ] == "jobs" )
+       else if( jerb->theJob[ 0 ] == "jobs" )
        {
-	    jobs();
+	     jobs();
        }
-       else if( command[ 0 ] == "kill" )
+       else if( jerb->theJob[ 0 ] == "kill" )
        {
-            kill ( command );
+            kill ( jerb->theJob );
        }
        else
        {
-        	executeJob( command, envp );
+        	executeJob( jerb, envp );
        }
    }
   
 }
 
-void executeJob( vector<string> jerbs, char ** envp )
+void executeJob( job * jerb, char ** envp )
 {
 	bool exists;
-	char ** argv = new char*[ jerbs.size() + 1 ];
+	char ** argv = new char*[ jerb->theJob.size() + 1 ];
 	
 
-	for(  int i = 0; i < jerbs.size(); i++) 
+	for(  int i = 0; i < jerb->theJob.size(); i++) 
 	{
-		argv[ i ] = new char[jerbs[i].length() + 1];
-		strcpy(argv[ i], jerbs[i].c_str());
+		argv[ i ] = new char[jerb->theJob[i].length() + 1];
+		strcpy(argv[ i], jerb->theJob[i].c_str());
 	}
 
-	argv[ jerbs.size() ] = NULL;  
+	argv[ jerb->theJob.size() ] = NULL;  
 
 
-	if( jerbs[0][0] == '/' )
+	if( jerb->theJob[0][0] == '/' )
 	{
-		exists = fileExists( jerbs[0] );
+		exists = fileExists( jerb->theJob[0] );
 	}
-	else if( !strncmp( "./", jerbs[0].c_str(), 2 ) )
+	else if( !strncmp( "./", jerb->theJob[0].c_str(), 2 ) )
 	{
-		jerbs[0].erase( 0, 2 );
+		jerb->theJob[0].erase( 0, 2 );
 
-		exists = fileExists( jerbs[0] );
+		exists = fileExists( jerb->theJob[0] );
 	}
 	else
 	{
-		jerbs[0] = getPath( jerbs[0] );
+		jerb->theJob[0] = getPath( jerb->theJob[0] );
 		
-		if( jerbs[0] != "" )
+		if( jerb->theJob[0] != "" )
 		{
-			cout << jerbs[0] << endl;
+			cout << jerb->theJob[0] << endl;
 			exists = true;
 		}
 		else
@@ -120,7 +123,7 @@ void executeJob( vector<string> jerbs, char ** envp )
 		}
 		else if( pid == 0 )
 		{
-			if( execve( jerbs[0].c_str(), argv, envp ) < 0 )
+			if( execve( jerb->theJob[0].c_str(), argv, envp ) < 0 )
 			{
 				cout << "YOU SUCK" << endl;
 			}
@@ -235,7 +238,7 @@ void jobs()
 
 	for(int i = 0; i < theJobs.size(); i ++)
 	{ /* Print out each job, specifying what is in the background and what isn't. */
-	cout << theJobs[i].id << " " << theJobs[i].pid << " " << theJobs[i].theJob << "\n";
+	cout << theJobs[i].id << " " << theJobs[i].pid << " " << theJobs[i].theJob[0] << "\n";
 	}
 }
  
@@ -306,18 +309,38 @@ bool fileExists(string theFile)
 	return true;
 }
 
-vector<string> buildCommand( string arg )
+job * buildJob( string arg )
 {
     string iterator;
     stringstream input;
-    vector<string> build;
+    job * Jerb = new job();
+    Jerb->fileIn = "";
+    Jerb->fileOut = "";
+    Jerb->isBackground = false;
 
     input << arg;
     while( input >> iterator )
     {
-        build.push_back( iterator );
+	if( iterator == "<" )
+	{
+		input >> iterator;
+		Jerb->fileIn = iterator;
+	}
+	if( iterator == ">" )
+	{
+		input >> iterator;
+		Jerb->fileOut = iterator;
+	}
+	if( iterator == "&" )
+	{
+		Jerb->isBackground = true;
+	}
+	else
+	{
+       	 	Jerb->theJob.push_back( iterator );
+	}
     }
 
-   return build;
+   return Jerb;
 }
        	
