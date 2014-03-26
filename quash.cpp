@@ -28,18 +28,20 @@ void kill(vector<string> arg);
 void jobs();
 void changeDir( vector<string> test );
 void set( vector<string> command );
-job * buildJob( string arg );
+vector<job *> buildJob( string arg );
 bool fileExists( string theFile );
 string getPath( string );
 bool stdIn(string theFile);
 bool stdOut(string theFile);
-void executeJob( job * jerb, char ** );
+void executeJob( vector<job *> jerb, char ** );
 
-vector<job *> theJobs;
+vector<job *> theJobs; /* data structure to hold background processes */
 
 
 int main( int argc, char **argv, char **envp )
 { /* Quash, its Quite an Awesome SHell, isn't it? */
+
+	/* set up monitoring of background processes */
 	struct sigaction sig;
 	
 	memset( &sig, 0, sizeof( sig ) );
@@ -51,7 +53,7 @@ int main( int argc, char **argv, char **envp )
 		exit( 1 );
 	} 
 
-   job * jerb = new job;
+   vector<job *> jerb;
    string commandLine;
    cout << "quash~$ ";
    while( getline( cin, commandLine ) )
@@ -59,25 +61,25 @@ int main( int argc, char **argv, char **envp )
 	cout << "quash~$ ";
        jerb = buildJob( commandLine );
 
-       if( jerb->theJob[ 0 ] == "quit" || jerb->theJob[ 0 ] == "exit" )
+       if( jerb[0]->theJob[ 0 ] == "quit" || jerb[0]->theJob[ 0 ] == "exit" )
        { /* Exit Quash. */
             exit( 0 );
        }
-       else if( jerb->theJob[ 0 ] == "cd" )
+       else if( jerb[0]->theJob[ 0 ] == "cd" )
        { /* Change Directory. */
-	    changeDir( jerb->theJob );
+	    changeDir( jerb[0]->theJob );
        }
-       else if( jerb->theJob[ 0 ] == "set" )
+       else if( jerb[0]->theJob[ 0 ] == "set" )
        { /* Set PATH or HOME. */
-            set( jerb->theJob );
+            set( jerb[0]->theJob );
        }
-       else if( jerb->theJob[ 0 ] == "jobs" )
+       else if( jerb[0]->theJob[ 0 ] == "jobs" )
        { /* List jobs. */
 	     jobs();
        }
-       else if( jerb->theJob[ 0 ] == "kill" )
+       else if( jerb[0]->theJob[ 0 ] == "kill" )
        { /* Kill job. */
-            kill ( jerb->theJob );
+            kill ( jerb[0]->theJob );
        }
        else
        { /* Execute job. */
@@ -87,50 +89,63 @@ int main( int argc, char **argv, char **envp )
   
 }
 
-void executeJob( job * jerb, char ** envp )
+void executeJob( vector<job *> jerb, char ** envp )
 { /* Executes an executable, with or without arguments, while passing down
      the environment to all child processes. */
-	bool exists;
-	pid_t process;
-	
 	/* Save descriptors. */
 	int theStdIn = dup(STDIN_FILENO);
 	int theStdOut = dup(STDOUT_FILENO);
 
-	if(jerb->fileIn != "")
-	{ /* Redirect input. */
-		stdIn(jerb->fileIn);
-	}
-
-	if(jerb->fileOut != "")
-	{ /* Redirect output. */
-		stdOut(jerb->fileOut);
-	}
-
-	char ** argv = new char*[ jerb->theJob.size() + 1 ];
-	
-	for(  int i = 0; i < jerb->theJob.size(); i++) 
+	/* init pipe to support single pipe */
+	int pipes[2];
+       if( pipe(pipes) < 0 )
 	{
-		argv[ i ] = new char[jerb->theJob[i].length() + 1];
-		strcpy(argv[ i], jerb->theJob[i].c_str());
+		cout << " error with piping" << endl;
+	}
+	for( int i = 0; i < jerb.size(); i++ )
+	{
+	bool exists;
+	pid_t process;
+
+				
+	if(jerb[i]->fileIn != "")
+	{ /* Redirect input. */
+		stdIn(jerb[i]->fileIn);
 	}
 
-	argv[ jerb->theJob.size() ] = NULL;  
+	if(jerb[i]->fileOut != "")
+	{ /* Redirect output. */
+		stdOut(jerb[i]->fileOut);
+	}
 
-	if( jerb->theJob[0][0] == '/' )
+	/* translate arguements from a vector to a format execve can understand */
+	char ** argv = new char*[ jerb[i]->theJob.size() + 1 ];
+	
+	for(  int j = 0; j < jerb[i]->theJob.size(); j++) 
+	{
+		argv[ j ] = new char[jerb[i]->theJob[j].length() + 1];
+		strcpy(argv[j], jerb[i]->theJob[j].c_str());
+	}
+
+	argv[ jerb[i]->theJob.size() ] = NULL;  
+
+	if( jerb[i]->theJob[0][0] == '/' )
 	{ /* Path is absolute. */
-		exists = fileExists( jerb->theJob[0] );
+		exists = fileExists( jerb[i]->theJob[0] );
 	}
-	else if( !strncmp( "./", jerb->theJob[0].c_str(), 2 ) )
+
+	else if( !strncmp( "./", jerb[i]->theJob[0].c_str(), 2 ) )
 	{ /* Path is relative. */
-		jerb->theJob[0].erase( 0, 2 );
-		exists = fileExists( jerb->theJob[0] );
+		jerb[i]->theJob[0].erase( 0, 2 );
+		exists = fileExists( jerb[i]->theJob[0] );
 	}
+
 	else
 	{ /* Path is part of PATH. */
-		jerb->theJob[0] = getPath( jerb->theJob[0] );
+
+		jerb[i]->theJob[0] = getPath( jerb[i]->theJob[0] );
 		
-		if( jerb->theJob[0] != "" )
+		if( jerb[i]->theJob[0] != "" )
 		{ /* Job is not empty. */
 			exists = true;
 		}
@@ -143,7 +158,9 @@ void executeJob( job * jerb, char ** envp )
 
 	if( exists )
 	{ /* If the file exists. */
+;
 		pid_t pid = fork();
+
 		
 		if( pid	< 0 )
 		{ /* Child forked badly. */
@@ -151,29 +168,50 @@ void executeJob( job * jerb, char ** envp )
 		}
 		else if( pid == 0 )
 		{ /* Child forked. */
-			if( jerb->isBackground )
+			if( jerb[i]->isBackground )
 			{ /* Check for background flag. */
 				setpgid( 0, 0 );
 			}
+			/* Support for single pipe */
+			if( i == 0 && jerb.size() == 2 )
+			{
+				close( pipes[0] );
+				dup2( pipes[1], STDOUT_FILENO ); /* set write end */
+				close(pipes[1]);
+			}
+			else if( i == 1 && jerb.size() == 2 )
+			{
+				close( pipes[1] );
+				dup2( pipes[0], STDIN_FILENO ); /* set read end if second process */
+				close(pipes[0]);
 
-			if( execve( jerb->theJob[0].c_str(), argv, envp ) < 0 )
+			}
+
+			/* by using execve we can pass enviroment to child process */
+			if( execve( jerb[i]->theJob[0].c_str(), argv, envp ) < 0 )
 			{ /* Notify if execution fails. */
 				cout << "Error in execution of job" << endl;
 			}
 		}
 		else
 		{
-			if( jerb->isBackground == true )
+
+			if( jerb[i]->isBackground == true )
 			{/* Check for background flag. */
-				jerb->id = jobId++;
-				jerb->pid = pid;
-				cout << "[ " << jerb->id << " ] " << jerb->pid << " running in the background." << endl;
-				theJobs.push_back( jerb );
+				close(pipes[1]);
+				close(pipes[2]);
+				jerb[i]->id = jobId++;
+				jerb[i]->pid = pid;
+				cout << "[ " << jerb[i]->id << " ] " << jerb[i]->pid << " running in the background." << endl;
+				theJobs.push_back( jerb[i] );
 			}
 			else
 			{ /* Not background, wait for it to finish. */
+			close(pipes[1]);
+			close(pipes[2]);
 				wait( NULL );
 			}
+
 		}
 
 	}
@@ -183,6 +221,9 @@ void executeJob( job * jerb, char ** envp )
 		cout << "FILE NOT FOUND" << endl;
 	}
 
+	}
+	close(pipes[0]);
+	close(pipes[1]);
 	/* Reset descriptors. */
 	dup2(theStdIn, STDIN_FILENO);
 	dup2(theStdOut, STDOUT_FILENO);
@@ -349,38 +390,62 @@ bool fileExists(string theFile)
 	return true;
 }
 
-job * buildJob( string arg )
+vector<job *> buildJob( string arg )
 { /* Parses a line of commands, searches for any redirection / background. */
     string iterator;
     stringstream input;
-    job * Jerb = new job();
-    Jerb->fileIn = "";
-    Jerb->fileOut = "";
-    Jerb->isBackground = false;
+    vector<job *> Jerb;
+    job * job1;
+    int i = 0;
 
+    job1 = new job;
+
+    job1->fileIn = "";
+    job1->fileOut = "";
+    job1->isBackground = false;
+    job1->hasPipe = false;
+
+
+    Jerb.push_back( job1 );
+ 
+ 
     input << arg;
     while( input >> iterator )
     {
 	if( iterator == "<" )
 	{ /* Checks for file redirection, prepares it to redirect input. */
 		input >> iterator;
-		Jerb->fileIn = iterator;
+		Jerb[i]->fileIn = iterator;
 	}
 
 	else if( iterator == ">" )
 	{ /* Checks for file redirection, prepares it to redirect output. */
 		input >> iterator;
-		Jerb->fileOut = iterator;
+		Jerb[i]->fileOut = iterator;
 	}
 
 	else if( iterator == "&" )
 	{ /* Checks if it should be run in the background, sets flag. */
-		Jerb->isBackground = true;
+		Jerb[i]->isBackground = true;
+	}
+
+	/* detecting piping */
+	else if( iterator == "|" )
+	{
+            i++;
+    	    job * job2;
+	    job2 = new job;
+
+	    job2->fileIn = "";
+	    job2->fileOut = "";
+	    job2->isBackground = false;
+	    job2->hasPipe = false;
+	   Jerb.push_back( job2 );
 	}
 	
 	else
 	{ /* Essentially adds the parsed piece as an argument. */
-       	 	Jerb->theJob.push_back( iterator );
+       	 	Jerb[i]->theJob.push_back( iterator );
 	}
     }
 
@@ -390,7 +455,7 @@ job * buildJob( string arg )
 void sigHandler(int signal) 
 {
 	pid_t pid;
-
+	/* if a background process finishes remove from background job datastructure and report the fact that it finished */
 	while( (pid = waitpid( -1, NULL, WNOHANG)) > 0 )
 	 {
 
