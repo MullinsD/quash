@@ -278,12 +278,6 @@ bool stdIn(string theFile)
 { /* Copies the file pointer to STDIN_FILENO or notifies user of mistakes. */
 	FILE* inFile = fopen(theFile.c_str(), "r");
 	if(inFile == NULL)
-	{ /* Check if file exists. */
-		cout << "File " << theFile << " does not exist.\n Please enter a valid filename.\n";
-		return false;
-	}
-
-	if(inFile == NULL)
 	{ /* Check if readable. */
 		cout << "File " << theFile << " is not readable.\n Please check permissions or enter another file.\n";
 		return false;
