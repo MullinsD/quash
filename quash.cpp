@@ -77,6 +77,16 @@ void executeJob( job * jerb, char ** envp )
 { /* Executes an executable, with or without arguments, while passing down
      the environment to all child processes. */
 	bool exists;
+	if(jerb->fileIn != "")
+	{ /* Redirect input. */
+		stdIn(jerb->fileIn);
+	}
+
+	if(jerb->fileOut != "")
+	{ /* Redirect output. */
+		stdOut(jerb->fileOut);
+	}
+
 	char ** argv = new char*[ jerb->theJob.size() + 1 ];
 	
 	for(  int i = 0; i < jerb->theJob.size(); i++) 
