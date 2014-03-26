@@ -403,7 +403,7 @@ vector<job *> buildJob( string arg )
     job1->fileIn = "";
     job1->fileOut = "";
     job1->isBackground = false;
-    job1->hasPipe = false;
+
 
 
     Jerb.push_back( job1 );
@@ -439,7 +439,6 @@ vector<job *> buildJob( string arg )
 	    job2->fileIn = "";
 	    job2->fileOut = "";
 	    job2->isBackground = false;
-	    job2->hasPipe = false;
 	   Jerb.push_back( job2 );
 	}
 	
