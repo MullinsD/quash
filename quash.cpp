@@ -74,11 +74,11 @@ int main( int argc, char **argv, char **envp )
 }
 
 void executeJob( job * jerb, char ** envp )
-{
+{ /* Executes an executable, with or without arguments, while passing down
+     the environment to all child processes. */
 	bool exists;
 	char ** argv = new char*[ jerb->theJob.size() + 1 ];
 	
-
 	for(  int i = 0; i < jerb->theJob.size(); i++) 
 	{
 		argv[ i ] = new char[jerb->theJob[i].length() + 1];
@@ -87,7 +87,6 @@ void executeJob( job * jerb, char ** envp )
 
 	argv[ jerb->theJob.size() ] = NULL;  
 
-
 	if( jerb->theJob[0][0] == '/' )
 	{
 		exists = fileExists( jerb->theJob[0] );
@@ -95,10 +94,9 @@ void executeJob( job * jerb, char ** envp )
 	else if( !strncmp( "./", jerb->theJob[0].c_str(), 2 ) )
 	{
 		jerb->theJob[0].erase( 0, 2 );
-
-		exists = fileExists( jerb->theJob[0] );
 	}
 	else
+
 	{
 		jerb->theJob[0] = getPath( jerb->theJob[0] );
 		
@@ -124,14 +122,14 @@ void executeJob( job * jerb, char ** envp )
 		else if( pid == 0 )
 		{
 			if( execve( jerb->theJob[0].c_str(), argv, envp ) < 0 )
-			{
+			{	
 				cout << "YOU SUCK" << endl;
 			}
 		}
 	}
 	else
-	{
-	cout << "FILE NOT FOUND" << endl;
+	{ /* File doesn't exist. */
+		cout << "FILE NOT FOUND" << endl;
 	}
 
 	wait( NULL );
@@ -139,18 +137,17 @@ void executeJob( job * jerb, char ** envp )
 
 	
 string getPath( string Executable )
-{
+{ /* Returns the path of the entered executable in string format. */
 	stringstream ss( getenv( "PATH" ) );
 	string tokens;
 	vector<string> paths;
-
 	while( getline( ss, tokens, ':' ) )
 	{
 		paths.push_back( tokens );
 	}
 
-		for(int i = 0; i < paths.size(); i++)
-	{
+	for(int i = 0; i < paths.size(); i++)
+	{ /* Slap a whack in between the path and executable. */
 
 		paths[ i ] += '/' + Executable;
 		
@@ -164,19 +161,19 @@ string getPath( string Executable )
 	return "";
 }
 
-void changeDir( vector<string> test )
-{
-    if( test.size() == 1 )
-    {
+void changeDir( vector<string> command )
+{ /* Changes working directory to argument entered. */
+    if( command.size() == 1 )
+    { /* Switch to home if no directory is entered. */
         if( chdir( getenv( "HOME" ) ) < 0 )
         {
             cout << "ERROR RETURNING TO HOME DIRECTORY" << endl;
         }
     }
 
-    else if( test.size() == 2 )
-    {
-	if( chdir( test[1].c_str() ) < 0 )
+    else if( command.size() == 2 )
+    { /* Switch to targeted directory, tell user if its not real. */
+	if( chdir( command[1].c_str() ) < 0 )
 	{
 	    cout << "DIR DOES NOT EXIST" << endl;
 	}
@@ -184,11 +181,11 @@ void changeDir( vector<string> test )
 }
 
 void set( vector<string> command )
-{
+{ /* Set the PATH or HOME variables to something the user desires. */
         string newPath;
 
 	if( command.size() == 1 )
-	{       // If there are no arguments, tell user how to use.
+	{       /* If there are no arguments, tell user how to use. */
 		cout << "When using set, you must enter an enviroment variable to edit, in this case, HOME= or PATH=\n";
                 return;
 	}
@@ -237,8 +234,9 @@ void jobs()
 	}
 
 	for(int i = 0; i < theJobs.size(); i ++)
+
 	{ /* Print out each job, specifying what is in the background and what isn't. */
-	cout << theJobs[i].id << " " << theJobs[i].pid << " " << theJobs[i].theJob[0] << "\n";
+		cout << theJobs[i].id << " " << theJobs[i].pid << " " << theJobs[i].theJob[0] << "\n";
 	}
 }
  
@@ -248,12 +246,12 @@ void kill(vector<string> arg)
 	int theInt;
 	is >> theInt;
 	if(kill(theInt, SIGINT) != 0)
-	{
+	{ /* If the process cannot be killed. */
 		cout << "Process was immortal, could not kill.\n";
 	}
 
 	else
-	{
+	{ /* Process was successfully killed. */
 		cout << "Process " << arg[1] << " was killed.\n";
 	}
 }
@@ -302,7 +300,7 @@ bool fileExists(string theFile)
 { /* Checks to see if a file exists using the access system call, returns 0 if it does,
      returns -1 if it does not, and prints an error message. */
 	if(access(theFile.c_str(), F_OK) != 0)
-	{
+	{ /* Simply check if the file exists. */
 		return false;
 	}
 
