@@ -11,6 +11,8 @@
 
 using namespace std;
 
+int jobId;
+
 struct job
 { /* Variables to hold job info. */
 	bool isBackground;
@@ -21,6 +23,7 @@ struct job
 	pid_t pid;
 };
 
+void sigHandler(int signal);
 void kill(vector<string> arg);
 void jobs();
 void changeDir( vector<string> test );
@@ -32,12 +35,22 @@ bool stdIn(string theFile);
 bool stdOut(string theFile);
 void executeJob( job * jerb, char ** );
 
-vector<job> theJobs;
+vector<job *> theJobs;
 
 
 int main( int argc, char **argv, char **envp )
 {
-   char ** test;
+	struct sigaction sig;
+	
+	memset( &sig, 0, sizeof( sig ) );
+	sig.sa_handler = sigHandler;
+
+	if( sigaction( SIGCHLD, &sig, NULL ) == -1 )
+	{
+		cerr << "Failure in signal monitoring." << endl;
+		exit( 1 );
+	} 
+
    job * jerb = new job;
    string commandLine;
 
@@ -77,6 +90,7 @@ void executeJob( job * jerb, char ** envp )
 { /* Executes an executable, with or without arguments, while passing down
      the environment to all child processes. */
 	bool exists;
+	pid_t process;
 	
 	/* Save descriptors. */
 	int theStdIn = dup(STDIN_FILENO);
@@ -109,6 +123,7 @@ void executeJob( job * jerb, char ** envp )
 	else if( !strncmp( "./", jerb->theJob[0].c_str(), 2 ) )
 	{
 		jerb->theJob[0].erase( 0, 2 );
+		exists = fileExists( jerb->theJob[0] );
 	}
 	else
 
@@ -117,7 +132,6 @@ void executeJob( job * jerb, char ** envp )
 		
 		if( jerb->theJob[0] != "" )
 		{
-			cout << jerb->theJob[0] << endl;
 			exists = true;
 		}
 		else
@@ -132,23 +146,41 @@ void executeJob( job * jerb, char ** envp )
 		
 		if( pid	< 0 )
 		{
-			cout << "YOU SUCK AT FORKING" << endl;
+			cout << "Problem forking child" << endl;
 		}
 		else if( pid == 0 )
 		{
+
+			if( jerb->isBackground )
+			{
+				setpgid( 0, 0 );
+			}
+
 			if( execve( jerb->theJob[0].c_str(), argv, envp ) < 0 )
 			{	
-				cout << "YOU SUCK" << endl;
+				cout << "Error in execution of job" << endl;
 			}
+		}
+		else
+		{
+		if( jerb->isBackground == true )
+		{
+			jerb->id = jobId++;
+			jerb->pid = pid;
+			cout << "[ " << jerb->id << " ] " << jerb->pid << " running in the background." << endl;
+			theJobs.push_back( jerb );
+		}
+		else
+		{
+			wait( NULL );
+		}
+	/* Reset descriptors. */
 		}
 	}
 	else
 	{ /* File doesn't exist. */
 		cout << "FILE NOT FOUND" << endl;
 	}
-
-	wait( NULL );
-	/* Reset descriptors. */
 	dup2(theStdIn, STDIN_FILENO);
 	dup2(theStdOut, STDOUT_FILENO);
 }
@@ -254,7 +286,7 @@ void jobs()
 	for(int i = 0; i < theJobs.size(); i ++)
 
 	{ /* Print out each job, specifying what is in the background and what isn't. */
-		cout << theJobs[i].id << " " << theJobs[i].pid << " " << theJobs[i].theJob[0] << "\n";
+		cout << theJobs[i]->id << " " << theJobs[i]->pid << " " << theJobs[i]->theJob[0] << "\n";
 	}
 }
  
@@ -358,5 +390,28 @@ job * buildJob( string arg )
     }
 
    return Jerb;
+}
+
+void sigHandler(int signal) 
+{
+	pid_t pid;
+
+	while( (pid = waitpid( -1, NULL, WNOHANG)) > 0 )
+	 {
+
+		for( int i = 0; i < theJobs.size(); i++ )
+		{
+			cout << pid << endl;
+			if( theJobs[i]->pid == pid )
+			{
+
+				cout << endl << "[ " << theJobs[i]->id << " ] " << theJobs[i]->pid << " finished " << theJobs[i]->theJob[0] << endl;
+
+				theJobs.erase(theJobs.begin() + i);
+
+				break;
+			}
+		}
+	}
 }
        	
