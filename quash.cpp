@@ -53,9 +53,10 @@ int main( int argc, char **argv, char **envp )
 
    job * jerb = new job;
    string commandLine;
-
+   cout << "quash~$ ";
    while( getline( cin, commandLine ) )
    { /* Read prompt. */
+	cout << "quash~$ ";
        jerb = buildJob( commandLine );
 
        if( jerb->theJob[ 0 ] == "quit" || jerb->theJob[ 0 ] == "exit" )
