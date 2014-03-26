@@ -342,12 +342,12 @@ job * buildJob( string arg )
 		input >> iterator;
 		Jerb->fileIn = iterator;
 	}
-	if( iterator == ">" )
+	else if( iterator == ">" )
 	{
 		input >> iterator;
 		Jerb->fileOut = iterator;
 	}
-	if( iterator == "&" )
+	else if( iterator == "&" )
 	{
 		Jerb->isBackground = true;
 	}
