@@ -77,6 +77,11 @@ void executeJob( job * jerb, char ** envp )
 { /* Executes an executable, with or without arguments, while passing down
      the environment to all child processes. */
 	bool exists;
+	
+	/* Save descriptors. */
+	int theStdIn = dup(STDIN_FILENO);
+	int theStdOut = dup(STDOUT_FILENO);
+
 	if(jerb->fileIn != "")
 	{ /* Redirect input. */
 		stdIn(jerb->fileIn);
@@ -143,6 +148,9 @@ void executeJob( job * jerb, char ** envp )
 	}
 
 	wait( NULL );
+	/* Reset descriptors. */
+	dup2(theStdIn, STDIN_FILENO);
+	dup2(theStdOut, STDOUT_FILENO);
 }
 
 	
@@ -283,16 +291,16 @@ bool stdIn(string theFile)
 	
 	dup2(fileno(inFile), STDIN_FILENO);
 	fclose(inFile);
-	return 0;
+	return true;
 }
 
 bool stdOut(string theFile)
 { /* Copies the file pointer to STDOUT_FILENO or notifies user of mistakes. */
+		
 	FILE* outFile = fopen(theFile.c_str(), "w");
 	if(fileExists(theFile) != 0)
 	{ /* Check if file exists. */
-		cout << "File " << theFile << " does not exist.\n Please enter a valid filename.\n";
-		return false;
+		cout << "File " << theFile << " does not exist. Creating file.\n";
 	}
 
 	if(outFile == NULL)
@@ -303,7 +311,7 @@ bool stdOut(string theFile)
 
 	dup2(fileno(outFile), STDOUT_FILENO);
 	fclose(outFile);
-	return 0;
+	return true;
 }
 
 bool fileExists(string theFile)
