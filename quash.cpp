@@ -277,7 +277,7 @@ void kill(vector<string> arg)
 bool stdIn(string theFile)
 { /* Copies the file pointer to STDIN_FILENO or notifies user of mistakes. */
 	FILE* inFile = fopen(theFile.c_str(), "r");
-	if(fileExists(theFile) != 0)
+	if(inFile == NULL)
 	{ /* Check if file exists. */
 		cout << "File " << theFile << " does not exist.\n Please enter a valid filename.\n";
 		return false;
@@ -298,13 +298,8 @@ bool stdOut(string theFile)
 { /* Copies the file pointer to STDOUT_FILENO or notifies user of mistakes. */
 		
 	FILE* outFile = fopen(theFile.c_str(), "w");
-	if(fileExists(theFile) != 0)
-	{ /* Check if file exists. */
-		cout << "File " << theFile << " does not exist. Creating file.\n";
-	}
-
 	if(outFile == NULL)
-	{ /* Check if readable. */
+	{ /* Check if writable. */
 		cout << "File " << theFile << " does not exist.\n Please check permissions or enter another file.\n";
 		return false;
 	}
@@ -326,7 +321,7 @@ bool fileExists(string theFile)
 }
 
 job * buildJob( string arg )
-{
+{ /* Parses a line of commands, searches for any redirection / background. */
     string iterator;
     stringstream input;
     job * Jerb = new job();
@@ -338,21 +333,24 @@ job * buildJob( string arg )
     while( input >> iterator )
     {
 	if( iterator == "<" )
-	{
+	{ /* Checks for file redirection, prepares it to redirect input. */
 		input >> iterator;
 		Jerb->fileIn = iterator;
 	}
+
 	else if( iterator == ">" )
-	{
+	{ /* Checks for file redirection, prepares it to redirect output. */
 		input >> iterator;
 		Jerb->fileOut = iterator;
 	}
+
 	else if( iterator == "&" )
-	{
+	{ /* Checks if it should be run in the background, sets flag. */
 		Jerb->isBackground = true;
 	}
+	
 	else
-	{
+	{ /* Essentially adds the parsed piece as an argument. */
        	 	Jerb->theJob.push_back( iterator );
 	}
     }
